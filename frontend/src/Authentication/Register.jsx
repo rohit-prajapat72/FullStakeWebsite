@@ -7,50 +7,64 @@ import { useState } from 'react'
 
 
 const RegisterAPI = 'http://127.0.0.1:8000/api/register/'
+const LoginAPI = 'http://127.0.0.1:8000/api/login/'
 const Register = () => {
-    const navigate = useNavigate();
-    const [message , setMessage] = useState('');
+  const navigate = useNavigate();
+  const [message, setMessage] = useState('');
 
-    const handleFormSubmit = async (formdata) => {
-        const FormInputData = Object.fromEntries(formdata.entries())
-        console.log(FormInputData)
+  const handleFormSubmit = async (formdata) => {
+    const FormInputData = Object.fromEntries(formdata.entries())
+    console.log(FormInputData)
 
-        try {
-            await axios.post(RegisterAPI, FormInputData)
-            alert("Registration Successfull")
-            navigate('/login')
-        }
-        catch (error) {
-            console.log(error)
-            setMessage(error)
-        }
+    try {
+      //Step 1 : Regisetr the user
+      await axios.post(RegisterAPI, FormInputData)
 
+      // Step 2: Login the user to get token
+      const loginRes = await axios.post(LoginAPI, {
+        username: FormInputData.username,
+        password: FormInputData.password
+      });
 
+      // Step 3: Save token
+      localStorage.setItem('access_token', loginRes.data.access);
+      localStorage.setItem('refresh_token', loginRes.data.refresh);
+      axios.defaults.headers.common['Authorization'] = `Bearer ${loginRes.data.access}`;
+
+      alert("Registration Successfull")
+      navigate('/login')
     }
-    return (
-        <Wrapper>
-            <form action={handleFormSubmit} className="form-section">
-                <h2>📝 Register</h2>
-                <input type="text" name="username" placeholder="Username" required />
-                <input type="email" name="email" placeholder="Email" required />
-                <input type="password" name="password" placeholder="Password" required />
-                <input
-                    type="password"
-                    name="password2"
-                    placeholder="Confirm Password"
-                    required
-                />
+    catch (err) {
+      console.log(err)
+      setMessage(err.response?.data?.detail || "Registration failed")
+    }
 
-                <Button type="submit">Register</Button>
 
-                <p className="login-link">
-                    Already have an account? <NavLink to="/login">Log in</NavLink>
-                </p>
-                {message && <p className='message'>{message}</p> }
-            </form>
-        </Wrapper>
+  }
+  return (
+    <Wrapper>
+      <form action={handleFormSubmit} className="form-section">
+        <h2>📝 Register</h2>
+        <input type="text" name="username" placeholder="Username" required />
+        <input type="email" name="email" placeholder="Email" required />
+        <input type="password" name="password" placeholder="Password" required />
+        <input
+          type="password"
+          name="password2"
+          placeholder="Confirm Password"
+          required
+        />
 
-    )
+        <Button type="submit">Register</Button>
+
+        <p className="login-link">
+          Already have an account? <NavLink to="/login">Log in</NavLink>
+        </p>
+        {message && <p className='message'>{message}</p>}
+      </form>
+    </Wrapper>
+
+  )
 }
 
 const Wrapper = styled.div`

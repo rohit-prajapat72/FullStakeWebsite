@@ -21,7 +21,7 @@ const GoogleSignIn = () => {
 
     return (
         <div>
-            <GoogleOAuthProvider clientId="385871240349-qbb1i3ls40psu9g8100o7ec33mrpmt8o.apps.googleusercontent.com">
+            <GoogleOAuthProvider clientId="930728756729-b3da49veo26ku36160eg0kjgj923j0h2.apps.googleusercontent.com">
                 <div className="google-signin">
                     <GoogleLogin
                         onSuccess={handleSuccess}

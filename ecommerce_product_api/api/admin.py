@@ -67,15 +67,15 @@ class OrderAdmin(admin.ModelAdmin):
     list_display = (
         'order_id',
         'user',
+        'product',
         'customer_name',
-        'customer_email',
         'quantity',
         'status',
         'shipping_address',
         'order_date',
     )
     list_filter = ('status', 'order_date')
-    search_fields = ('order_id', 'customer_name', 'customer_email', 'user__username')
+    search_fields = ('order_id', 'customer_name' 'user__username')
     readonly_fields = ('order_date',)
 
 # ✅ Coupon Admin

@@ -14,6 +14,9 @@ from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from rest_framework.permissions import AllowAny
+from django.utils.timezone import now
+from rest_framework.permissions import IsAuthenticated
+
 
 
 
@@ -21,6 +24,7 @@ from rest_framework.permissions import AllowAny
 # user Authentication
 # Signup
 class RegisterView(APIView):
+    permission_classes = [AllowAny]  # ✅ Yeh line ensure karo
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
@@ -30,6 +34,7 @@ class RegisterView(APIView):
 
 #login view  
 class LoginView(APIView):
+    permission_classes = [AllowAny]  # ✅ Yeh line ensure karo
     def post(self, request):
         serializer = LoginSerializer(data = request.data)
         if serializer.is_valid():
@@ -147,6 +152,7 @@ class ContactView(APIView):
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Product.objects.filter(status='active').order_by('-created_at')
     serializer_class = ProductSerializer
+    permission_classes = [IsAuthenticated]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'brand', 'category__name']
     ordering_fields = ['price', 'created_at']
@@ -154,12 +160,51 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     
 
 # Order ViewSet
-class OrderViewSet(viewsets.ModelViewSet):
-    serializer_class = OrderSerializer
-    permission_classes = [permissions.IsAuthenticated]
+class CreateOrderView(APIView):
+    permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        return Order.objects.filter(user=self.request.user)
+    def post(self, request):
+        data = request.data
+        user = request.user
+
+        shipping_data = data.get("shipping_address")
+        shipping_serializer = ShippingSerializer(data=shipping_data)
+        if not shipping_serializer.is_valid():
+            return Response(
+                {"shipping_errors": shipping_serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Save shipping address
+        shipping = ShippingAddress.objects.create(user=user, **shipping_serializer.validated_data)
+
+        # Handle optional fields like paid_at
+        is_paid = data.get("is_paid", False)
+        paid_at = now() if is_paid else None
+
+        # Prepare order data
+        order_data = {
+            "user": user.id,
+            "shipping_address": shipping.id,
+            "product": data.get("product"),
+            "customer_name": data.get("customer_name"),
+            "quantity": data.get("quantity"),
+            "total_price": data.get("total_price"),
+            "payment_method": data.get("payment_method", "COD"),
+            "is_paid": is_paid,
+            "paid_at": paid_at,
+            "status": data.get("status", "pending")
+        }
+
+        order_serializer = OrderSerializer(data=order_data)
+        if order_serializer.is_valid():
+            order = order_serializer.save(user=user, shipping_address=shipping)
+            return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(
+                {"order_errors": order_serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 # Review ViewSet
 class ProductReviewViewSet(viewsets.ModelViewSet):

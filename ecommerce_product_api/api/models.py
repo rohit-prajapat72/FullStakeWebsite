@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.text import slugify
+import uuid
 
 # Create your models here.
 
@@ -105,6 +106,9 @@ class ShippingAddress(models.Model):
     zip_code = models.CharField(max_length=10)
     created_at = models.DateTimeField(auto_now_add=True)
     
+    def __str__(self):
+        return f"{self.user.username} - {self.city}, {self.country}"
+    
 class Order(models.Model):
     STATUS=[
         ('pending', 'Pending'),
@@ -115,16 +119,25 @@ class Order(models.Model):
         ('returned','Returned') 
     ]
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
     order_id = models.CharField(max_length=100,unique=True)
     customer_name = models.CharField(max_length=100)
-    customer_email = models.EmailField()
     quantity = models.IntegerField(default=0)
+    total_price = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_method = models.CharField(max_length=100, default="COD")
+    is_paid = models.BooleanField(default=False)
+    paid_at = models.DateTimeField(null=True, blank=True)
     order_date = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=10, choices=STATUS, default='pending')
     shipping_address = models.ForeignKey(ShippingAddress, on_delete=models.CASCADE)
     
+    def save(self, *args, **kwargs):
+        if not self.order_id:
+            self.order_id = str(uuid.uuid4()).split("-")[0].upper()  # e.g., 'A3F9K2D1'
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return f"Order #{self.id}"
+        return self.order_id
     
 class Coupon(models.Model):
     code = models.CharField(max_length=50, unique=True)

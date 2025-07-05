@@ -13,7 +13,14 @@ const Login = () => {
     const FormInputData = Object.fromEntries(formdata.entries())
 
     try {
-      await axios.post(LoginApi, FormInputData)
+     const response =  await axios.post(LoginApi, FormInputData)
+      // ✅ Save tokens to localStorage
+      localStorage.setItem("access_token", response.data.access);
+      localStorage.setItem("refresh_token", response.data.refresh);
+
+      // ✅ Set Authorization header globally for axios
+      axios.defaults.headers.common["Authorization"] = `Bearer ${response.data.access}`;
+
       alert("Logged in successfully")
       navigate('/')
     } catch (error) {
@@ -23,30 +30,30 @@ const Login = () => {
 
   return (
     <Wrapper>
-        <div className="sign-in">
-          <div className="google-signin">
-            <GoogleSignIn />
-          </div>
-          <form action={handleFormSubmit} className="form-section">
-            <h2>🔐 Login</h2>
-            <input type="text" name="username" placeholder="Username" required />
-            <input type="password" name="password" placeholder="Password" required />
-            <div className="links">
-              <NavLink to="/ResetPassword" className="forgot-pass">
-                Forgot Password?
-              </NavLink>
-            </div>
-
-            <Button type="submit">Log in</Button>
-
-            <div className="auth-switch">
-              Don't have an account?
-              <NavLink to="/register" className="signup-link">
-                Sign Up
-              </NavLink>
-            </div>
-          </form>
+      <div className="sign-in">
+        <div className="google-signin">
+          <GoogleSignIn />
         </div>
+        <form action={handleFormSubmit} className="form-section">
+          <h2>🔐 Login</h2>
+          <input type="text" name="username" placeholder="Username" required />
+          <input type="password" name="password" placeholder="Password" required />
+          <div className="links">
+            <NavLink to="/ResetPassword" className="forgot-pass">
+              Forgot Password?
+            </NavLink>
+          </div>
+
+          <Button type="submit">Log in</Button>
+
+          <div className="auth-switch">
+            Don't have an account?
+            <NavLink to="/register" className="signup-link">
+              Sign Up
+            </NavLink>
+          </div>
+        </form>
+      </div>
     </Wrapper>
 
   )

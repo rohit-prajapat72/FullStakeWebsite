@@ -71,7 +71,7 @@ class ProductReviewSerializer(serializers.ModelSerializer):
 class ShippingSerializer(serializers.ModelSerializer):
     class Meta:
         model = ShippingAddress
-        fields = '__all__'
+        fields = '__all__'   
 
 class ProductSerializer(serializers.ModelSerializer):
     category = CategorySerializer()
@@ -104,26 +104,10 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = [
-            'id', 'order_id', 'customer_name', 'customer_email',
-            'quantity', 'status', 'order_date', 'shipping_address'
+            'id', 'order_id', 'product', 'customer_name',
+            'quantity', 'total_price', 'payment_method', 'is_paid', 'paid_at',
+            'status', 'order_date', 'shipping_address'
         ]
-        read_only_fields = ['user', 'order_date']
+        read_only_fields = ['user', 'order_id', 'order_date']
 
-    def create(self, validated_data):
-        shipping_data = validated_data.pop('shipping_address')
-        user = self.context['request'].user
-
-        # Create ShippingAddress first
-        shipping = ShippingAddress.objects.create(
-            user=user,
-            order_id=validated_data.get('order_id'),
-            **shipping_data
-        )
-
-        # Create Order using the shipping address
-        order = Order.objects.create(
-            user=user,
-            shipping_address=shipping,
-            **validated_data
-        )
-        return order
+    

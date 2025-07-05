@@ -12,8 +12,8 @@ const initialState = {
     isError: false,
     products: [],
     featuredProduct: [],
-    isSingleLoading:false,
-    singleProduct:{}
+    isSingleLoading: false,
+    singleProduct: {}
 }
 
 const ProductProvider = ({ children }) => {
@@ -22,14 +22,19 @@ const ProductProvider = ({ children }) => {
     const getProductData = async (url) => {
         dispatch({ type: 'SET_LOADING' })
         try {
-            const response = await axios.get(url);
-            const products = await response.data;     
+            const token = localStorage.getItem("access_token");
+            const response = await axios.get(url, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            const products = await response.data;
             dispatch({ type: 'SET_API_DATA', payload: products })
         } catch (error) {
             dispatch({ type: 'API_ERROR' })
         }
     }
-   
+
 
     // my 2nd api call for single product
 
