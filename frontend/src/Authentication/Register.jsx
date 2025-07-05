@@ -1,46 +1,43 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import axios from 'axios'
 import { Button } from '../style/Button'
 import styled from 'styled-components'
 import { useState } from 'react'
+import axiosInstance from '../API/axiosInstance';
 
 
 
-const RegisterAPI = 'http://127.0.0.1:8000/api/register/'
-const LoginAPI = 'http://127.0.0.1:8000/api/login/'
+const RegisterAPI = 'http://127.0.0.1:8000/api/register/';
+const LoginAPI = 'http://127.0.0.1:8000/api/token/'; // ✅ JWT login endpoint
+
 const Register = () => {
   const navigate = useNavigate();
   const [message, setMessage] = useState('');
 
   const handleFormSubmit = async (formdata) => {
-    const FormInputData = Object.fromEntries(formdata.entries())
-    console.log(FormInputData)
+    const FormInputData = Object.fromEntries(formdata.entries());
 
     try {
-      //Step 1 : Regisetr the user
-      await axios.post(RegisterAPI, FormInputData)
+      // Step 1: Register user
+      await axiosInstance.post(RegisterAPI, FormInputData);
 
-      // Step 2: Login the user to get token
-      const loginRes = await axios.post(LoginAPI, {
+      // Step 2: Login immediately after register
+      const loginRes = await axiosInstance.post(LoginAPI, {
         username: FormInputData.username,
-        password: FormInputData.password
+        password: FormInputData.password,
       });
 
       // Step 3: Save token
       localStorage.setItem('access_token', loginRes.data.access);
       localStorage.setItem('refresh_token', loginRes.data.refresh);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${loginRes.data.access}`;
 
-      alert("Registration Successfull")
-      navigate('/login')
+      alert("Registration & Login Successful!");
+      navigate('/');
+    } catch (err) {
+      console.log(err);
+      setMessage(err.response?.data?.detail || "Registration failed");
     }
-    catch (err) {
-      console.log(err)
-      setMessage(err.response?.data?.detail || "Registration failed")
-    }
+  };
 
-
-  }
   return (
     <Wrapper>
       <form action={handleFormSubmit} className="form-section">
@@ -48,25 +45,16 @@ const Register = () => {
         <input type="text" name="username" placeholder="Username" required />
         <input type="email" name="email" placeholder="Email" required />
         <input type="password" name="password" placeholder="Password" required />
-        <input
-          type="password"
-          name="password2"
-          placeholder="Confirm Password"
-          required
-        />
-
+        <input type="password" name="password2" placeholder="Confirm Password" required />
         <Button type="submit">Register</Button>
-
         <p className="login-link">
           Already have an account? <NavLink to="/login">Log in</NavLink>
         </p>
-        {message && <p className='message'>{message}</p>}
+        {message && <p className="message">{message}</p>}
       </form>
     </Wrapper>
-
-  )
-}
-
+  );
+};
 const Wrapper = styled.div`
   min-height: 100vh;
   background: ${({ theme }) => theme.colors.gradient};

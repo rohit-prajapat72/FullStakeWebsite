@@ -1,32 +1,30 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { Button } from '../style/Button';
 import styled from 'styled-components';
-import { Button } from '../style/Button'
 import GoogleSignIn from './GoogleSignIn';
+import axios from 'axios';
 
+const LoginAPI = 'http://127.0.0.1:8000/api/token/'; // ✅ JWT token endpoint
 
-const LoginApi = 'http://127.0.0.1:8000/api/login/'
 const Login = () => {
   const navigate = useNavigate();
 
   const handleFormSubmit = async (formdata) => {
-    const FormInputData = Object.fromEntries(formdata.entries())
+    const FormInputData = Object.fromEntries(formdata.entries());
 
     try {
-     const response =  await axios.post(LoginApi, FormInputData)
-      // ✅ Save tokens to localStorage
-      localStorage.setItem("access_token", response.data.access);
-      localStorage.setItem("refresh_token", response.data.refresh);
+      const res = await axios.post(LoginAPI, FormInputData);
 
-      // ✅ Set Authorization header globally for axios
-      axios.defaults.headers.common["Authorization"] = `Bearer ${response.data.access}`;
+      localStorage.setItem('access', res.data.access);
+      localStorage.setItem('refresh', res.data.refresh);
 
-      alert("Logged in successfully")
-      navigate('/')
+      alert("Login successful!");
+      navigate('/');
     } catch (error) {
-      alert("Invalid username or password")
+      alert("Invalid username or password");
+      console.error(error.response?.data);
     }
-  }
+  };
 
   return (
     <Wrapper>
@@ -43,9 +41,7 @@ const Login = () => {
               Forgot Password?
             </NavLink>
           </div>
-
           <Button type="submit">Log in</Button>
-
           <div className="auth-switch">
             Don't have an account?
             <NavLink to="/register" className="signup-link">
@@ -55,9 +51,8 @@ const Login = () => {
         </form>
       </div>
     </Wrapper>
-
-  )
-}
+  );
+};
 
 const Wrapper = styled.div`
   display: flex;

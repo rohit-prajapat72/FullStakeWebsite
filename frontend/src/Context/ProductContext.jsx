@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useReducer } from 'react'
 import axios from 'axios'
 import reducer from '../reducer/ProductReducer';
+import axiosInstance from '../API/axiosInstance';
 
 
 const AppContext = createContext();
@@ -22,15 +23,12 @@ const ProductProvider = ({ children }) => {
     const getProductData = async (url) => {
         dispatch({ type: 'SET_LOADING' })
         try {
-            const token = localStorage.getItem("access_token");
-            const response = await axios.get(url, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
+            
+            const response = await axiosInstance.get('products/');
             const products = await response.data;
             dispatch({ type: 'SET_API_DATA', payload: products })
         } catch (error) {
+            console.log("API Error:", error.response?.data || error.message);
             dispatch({ type: 'API_ERROR' })
         }
     }
@@ -41,7 +39,7 @@ const ProductProvider = ({ children }) => {
     const getSingleProduct = async (url) => {
         dispatch({ type: 'SET_SINGLE_LOADING' })
         try {
-            const response = await axios.get(url);
+            const response = await axiosInstance.get(url);
             const singleProduct = await response.data;
             dispatch({ type: 'SET_SINGLE_PRODUCT_DATA', payload: singleProduct })
         } catch (error) {
@@ -59,8 +57,6 @@ const ProductProvider = ({ children }) => {
         </AppContext.Provider>
     )
 }
-
-
 
 // create custom hook
 const useProductContext = () => {

@@ -5,7 +5,7 @@ from .serializers import *
 from rest_framework.response import Response
 from rest_framework import status
 from django.conf import settings
-from django.contrib.auth import authenticate
+# from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import generics, permissions
 from rest_framework import viewsets, filters
@@ -28,32 +28,19 @@ class RegisterView(APIView):
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            return Response({"message": "User created successfully"}, status=201)
-        return Response(serializer.errors, status=400)
+            user = serializer.save()  # ✅ Save user first
+            refresh = RefreshToken.for_user(user)  # ✅ Now pass user object
 
-#login view  
-class LoginView(APIView):
-    permission_classes = [AllowAny]  # ✅ Yeh line ensure karo
-    def post(self, request):
-        serializer = LoginSerializer(data = request.data)
-        if serializer.is_valid():
-            user = authenticate(
-                username=serializer.validated_data['username'],
-                password=serializer.validated_data['password']
-            )
-            if user:
-                refresh = RefreshToken.for_user(user)
-                return Response({
-                    'refresh':str(refresh),
-                    'access': str(refresh.access_token),
-                },status=status.HTTP_200_OK)
-            return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+                "message": "User created successfully"
+            }, status=201)
+
+        return Response(serializer.errors, status=400)
  
  
 # reset password 
-
 # STEP 1: Request Password Reset
 class PasswordResetRequestView(APIView):
     permission_classes = [AllowAny]
@@ -152,60 +139,45 @@ class ContactView(APIView):
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Product.objects.filter(status='active').order_by('-created_at')
     serializer_class = ProductSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'brand', 'category__name']
     ordering_fields = ['price', 'created_at']
     
     
-
-# Order ViewSet
+# create user order
 class CreateOrderView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        data = request.data
+        serializer = OrderSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            # ✅ Extract shipping data from validated input
+            shipping_data = serializer.validated_data.pop('shipping_address')
+            user = request.user
+
+            # ✅ Step 1: Create Order
+            order = Order.objects.create(user=user, **serializer.validated_data)
+
+            # ✅ Step 2: Create Shipping Address tied to this order
+            from .models import ShippingAddress
+            ShippingAddress.objects.create(user=user, order=order, **shipping_data)
+
+            # ✅ Step 3: Return full order response
+            response_serializer = OrderSerializer(order)
+            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# get user order  
+class MyOrdersView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
         user = request.user
-
-        shipping_data = data.get("shipping_address")
-        shipping_serializer = ShippingSerializer(data=shipping_data)
-        if not shipping_serializer.is_valid():
-            return Response(
-                {"shipping_errors": shipping_serializer.errors},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # Save shipping address
-        shipping = ShippingAddress.objects.create(user=user, **shipping_serializer.validated_data)
-
-        # Handle optional fields like paid_at
-        is_paid = data.get("is_paid", False)
-        paid_at = now() if is_paid else None
-
-        # Prepare order data
-        order_data = {
-            "user": user.id,
-            "shipping_address": shipping.id,
-            "product": data.get("product"),
-            "customer_name": data.get("customer_name"),
-            "quantity": data.get("quantity"),
-            "total_price": data.get("total_price"),
-            "payment_method": data.get("payment_method", "COD"),
-            "is_paid": is_paid,
-            "paid_at": paid_at,
-            "status": data.get("status", "pending")
-        }
-
-        order_serializer = OrderSerializer(data=order_data)
-        if order_serializer.is_valid():
-            order = order_serializer.save(user=user, shipping_address=shipping)
-            return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
-        else:
-            return Response(
-                {"order_errors": order_serializer.errors},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
+        orders = Order.objects.filter(user=user).order_by('-created_at')
+        serializer = OrderSerializer(orders, many=True)
+        return Response(serializer.data)
+    
 # Review ViewSet
 class ProductReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ProductReviewSerializer

@@ -26,11 +26,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
         return user
 
-# login serializer
-class LoginSerializer(serializers.Serializer):
-    username = serializers.CharField()
-    password = serializers.CharField()
-
 # user Profile
 class UserProfileSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
@@ -68,10 +63,6 @@ class ProductReviewSerializer(serializers.ModelSerializer):
         model = ProductReview
         fields = ['id', 'user', 'rating', 'comment', 'created_at']
         
-class ShippingSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ShippingAddress
-        fields = '__all__'   
 
 class ProductSerializer(serializers.ModelSerializer):
     category = CategorySerializer()
@@ -97,6 +88,11 @@ class ProductSerializer(serializers.ModelSerializer):
             'total_reviews': total_reviews
         }
 
+class ShippingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ShippingAddress
+        fields = '__all__'
+        read_only_fields = ['user']
 # order serializer 
 class OrderSerializer(serializers.ModelSerializer):
     shipping_address = ShippingSerializer()

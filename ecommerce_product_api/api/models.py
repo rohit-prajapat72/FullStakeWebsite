@@ -2,7 +2,6 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.text import slugify
-import uuid
 
 # Create your models here.
 
@@ -118,26 +117,26 @@ class Order(models.Model):
         ('completed','Completed'),
         ('returned','Returned') 
     ]
+    PAYMENT_METHOD_CHOICES = [
+    ('cod', 'Cash on Delivery'),
+    ('card', 'Credit/Debit Card'),
+    ('upi', 'UPI'),
+    ]
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     order_id = models.CharField(max_length=100,unique=True)
     customer_name = models.CharField(max_length=100)
     quantity = models.IntegerField(default=0)
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
-    payment_method = models.CharField(max_length=100, default="COD")
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES, default='cod')
     is_paid = models.BooleanField(default=False)
     paid_at = models.DateTimeField(null=True, blank=True)
     order_date = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=10, choices=STATUS, default='pending')
     shipping_address = models.ForeignKey(ShippingAddress, on_delete=models.CASCADE)
     
-    def save(self, *args, **kwargs):
-        if not self.order_id:
-            self.order_id = str(uuid.uuid4()).split("-")[0].upper()  # e.g., 'A3F9K2D1'
-        super().save(*args, **kwargs)
-
     def __str__(self):
-        return self.order_id
+        return f"Order #{self.id} - {self.user.username}"
     
 class Coupon(models.Model):
     code = models.CharField(max_length=50, unique=True)
