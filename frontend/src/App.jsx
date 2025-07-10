@@ -14,6 +14,7 @@ import { GlobalStyle } from '../src/GlobalStyle'
 import { ThemeProvider } from "styled-components"
 import ResetPasswordRequest from "./Authentication/ResetPasswordRequest"
 import ResetPasswordConfirm from "./Authentication/ResetPasswordConfirm"
+import BuyProduct from "./Pages/BuyProduct"
 
 const App = () => {
 
@@ -77,6 +78,10 @@ const App = () => {
         {
           path: '/profile',
           element: <Profile />
+        },
+        {
+          path: '/buy-now/:id',
+          element:<BuyProduct/>
         }
       ]),
     },

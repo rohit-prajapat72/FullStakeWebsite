@@ -3,39 +3,46 @@ import { useProductContext } from '../Context/ProductContext'
 import Loading from '../component/Loading'
 import ProductCard from '../component/ProductCard';
 import styled from 'styled-components';
+import FilterSection from '../component/FilterSection';
+import Sort from '../component/Sort';
 
 
 const Products = () => {
   const { isLoading, products } = useProductContext();
   console.log(products);
-  
+
   if (isLoading) {
     return <Loading />
   }
   return (
-    <Wrapper className="section">
-      <div className="container grid grid-two--column">
-         <div className="category-section bg-red-300">
-          <h2 className="text-center">Products</h2>
-          <p className="text-center">Explore our wide range of products</p> 
-         </div>
-        <div className="grid grid-two-column">
-          {products.map((curElem) => {
-            return <ProductCard key={curElem.id} {...curElem} />;
-          })}
+    <Wrapper>
+      <div className="container grid grid-filter-column">
+        <div>
+          <FilterSection />
         </div>
+        <section className='product-view--sort'>
+          <div className="sort-filter">
+            <Sort />
+          </div>
+          <div className="main-product grid grid-three-column">
+            {products.map((curElem) => {
+              return <ProductCard key={curElem.id} {...curElem} />;
+            })}
+          </div>
+        </section>
       </div>
     </Wrapper>
   )
 }
 const Wrapper = styled.section`
-  padding: 0.3rem 0;
-  background-color: ${({ theme }) => theme.colors.bg};
-
-  .container {
-    max-width: 100rem;
+  .grid-filter-column {
+    grid-template-columns: 0.2fr 1fr;
   }
-    
- `;
 
+  @media (max-width: ${({ theme }) => theme.media.mobile}) {
+    .grid-filter-column {
+      grid-template-columns: 1fr;
+    }
+  }
+`;
 export default Products

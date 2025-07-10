@@ -4,6 +4,7 @@ import './index.css'
 import App from './App.jsx'
 import { ProductProvider } from './Context/ProductContext.jsx'
 import axios from 'axios'
+import { OrderProvider } from './Context/OrderContext.jsx'
 
 
 // ✅ Set token globally on app start
@@ -15,7 +16,9 @@ if (token) {
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ProductProvider>
-      <App />
+      <OrderProvider>
+        <App />
+      </OrderProvider>
     </ProductProvider>
   </StrictMode>,
 )

@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useProductContext } from '../Context/ProductContext'
 import Loading from '../component/Loading'
-import { useParams } from 'react-router-dom'
+import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import PageNavigation from '../component/PageNavigation'
 import styled from 'styled-components'
 import ProductImage from '../component/ProductImage'
@@ -14,6 +14,7 @@ import RatingStar from '../component/RatingStar'
 import AddToCart from '../component/AddToCart'
 import ProductFeatures from '../component/ProductFeatures'
 import CostomerReviews from '../component/CostomerReviews'
+import { Button } from '../style/Button'
 
 
 
@@ -21,19 +22,26 @@ import CostomerReviews from '../component/CostomerReviews'
 const API = 'http://127.0.0.1:8000/api/products/'
 
 const ProductDetails = () => {
+  const navigate = useNavigate()
   const { isSingleLoading, singleProduct, getSingleProduct } = useProductContext();
 
   const { id } = useParams();
 
   const { name, brand, category, delivery_info, description, features, images, payment_method, ratings, return_policy, reviews, status, stock_quantity, stock_status, warranty, price } = singleProduct;
 
+  const handleBuyNow = () =>{
+    console.log('Buy Now Button Clicked')
+    navigate(`/buy-now/${id}`)
+  }
+
   useEffect(() => {
     getSingleProduct(`${API}${id}/`)
   }, [])
 
 
+
   if (isSingleLoading) {
-    return <Loading />
+    return <Loading />  
   }
   return (
     <Wrapper>
@@ -85,6 +93,9 @@ const ProductDetails = () => {
             <ProductFeatures features={features} />
             <hr />
             <AddToCart product={singleProduct} />
+            <Button onClick={handleBuyNow}>
+              Buy Now
+            </Button>
             <CostomerReviews reviews={reviews} />
           </div>
         </div>
