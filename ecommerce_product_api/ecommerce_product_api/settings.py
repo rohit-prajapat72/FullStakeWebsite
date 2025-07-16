@@ -27,9 +27,9 @@ SECRET_KEY = 'django-insecure-vp2)u$o426id@t_rv^*s8g=4$_v9(2seqc$!1gx1ioq#q#-wdx
 # SECURITY WARNING: don't run with debug turned on in production!
 
 # Security settings (MUST for production):
-DEBUG = False
-ALLOWED_HOSTS = ["api.onrender.com", "localhost"]
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+DEBUG = True
+# ALLOWED_HOSTS = ["api.onrender.com", "localhost"]
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
 ALLOWED_HOSTS = []
